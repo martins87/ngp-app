@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     container_name: go-api
     ports:
-      - "8000:8000"
+      - "8000:8080"
     depends_on:
       - db
     env_file:
