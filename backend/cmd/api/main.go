@@ -13,7 +13,9 @@ import (
 )
 
 func main() {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("No .env file found")
+	}
 
 	pool, err := db.NewPool()
 	if err != nil {
@@ -30,9 +32,11 @@ func main() {
 
 	r := gin.Default()
 
+	r.GET("/health", handler.HealthCheck)
 	r.GET("/users", handler.GetUsers)
 	r.GET("/users/:id", handler.GetUser)
 	r.POST("/users", handler.CreateUser)
+	r.PATCH("/users/:id", handler.UpdateUser)
 
 	r.Run(":8080")
 }

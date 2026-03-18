@@ -1,15 +1,22 @@
 package handlers
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/martins87/ngp-app/internal/dto"
 	"github.com/martins87/ngp-app/internal/models"
 	"github.com/martins87/ngp-app/internal/repository"
 )
 
 type UserHandler struct {
 	Repo *repository.UserRepository
+}
+
+func isValidEmail(email string) bool {
+	return strings.Contains(email, "@")
 }
 
 func repositoryUser(input struct {
@@ -20,6 +27,10 @@ func repositoryUser(input struct {
 		Name:  input.Name,
 		Email: input.Email,
 	}
+}
+
+func (h *UserHandler) HealthCheck(c *gin.Context) {
+	c.JSON(200, gin.H{"status": "ok"})
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
@@ -73,5 +84,50 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(201, user)
 }
 
-// func UpdateUser() {}
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	// Parse ID
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	// Bind input DTO
+	var input dto.UpdateUserInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	// Input validation
+	if input.Name == nil && input.Email == nil {
+		c.JSON(400, gin.H{"error": "no fields to update"})
+		return
+	}
+
+	if input.Name != nil && *input.Name == "" {
+		c.JSON(400, gin.H{"error": "name cannot be empty"})
+		return
+	}
+
+	if input.Email != nil && !isValidEmail(*input.Email) {
+		c.JSON(400, gin.H{"error": "invalid email"})
+		return
+	}
+
+	// Call service/repo
+	user, err := h.Repo.UpdateUser(c.Request.Context(), id, input)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(404, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(500, gin.H{"error": "internal server error"})
+		return
+	}
+
+	// Return updated user
+	c.JSON(200, user)
+}
+
 // func DeleteUser() {}

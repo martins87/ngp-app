@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/martins87/ngp-app/internal/dto"
 	"github.com/martins87/ngp-app/internal/models"
 )
 
@@ -62,5 +65,45 @@ func (r *UserRepository) CreateUser(ctx context.Context, u models.User) (models.
 	return u, nil
 }
 
-// func UpdateUser() (models.User, error) {}
+func (r *UserRepository) UpdateUser(
+	ctx context.Context,
+	id int,
+	input dto.UpdateUserInput,
+) (models.User, error) {
+	// Execute SQL
+	query := `
+		UPDATE users
+		SET
+			name = COALESCE($1, name),
+			email = COALESCE($2, email)
+		WHERE id = $3
+		RETURNING id, name, email, created_at
+	`
+
+	// Map DB -> model
+	var user models.User
+	err := r.DB.QueryRow(
+		ctx,
+		query,
+		input.Name,
+		input.Email,
+		id,
+	).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+	)
+
+	// Detect 'not found'
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, ErrUserNotFound
+		}
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
 // func DeleteUser() error {}
