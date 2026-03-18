@@ -21,13 +21,18 @@ func main() {
 	}
 
 	repo := &repository.UserRepository{DB: pool}
-	repo.CreateTable(context.Background())
+
+	if err := repo.CreateTable(context.Background()); err != nil {
+		log.Fatal("Failed to create table:", err)
+	}
 
 	handler := &handlers.UserHandler{Repo: repo}
 
 	r := gin.Default()
 
 	r.GET("/users", handler.GetUsers)
+	r.GET("/users/:id", handler.GetUser)
+	r.POST("/users", handler.CreateUser)
 
 	r.Run(":8080")
 }

@@ -20,19 +20,8 @@ func NewPool() (*pgxpool.Pool, error) {
 		os.Getenv("DB_NAME"),
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	// pool, err := pgxpool.New(ctx, dsn)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// if err := pool.Ping(ctx); err != nil {
-	// 	return nil, err
-	// }
-
-	// return pool, nil
 
 	var pool *pgxpool.Pool
 	var err error
