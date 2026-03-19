@@ -106,4 +106,17 @@ func (r *UserRepository) UpdateUser(
 	return user, nil
 }
 
-// func DeleteUser() error {}
+func (r *UserRepository) DeleteUser(ctx context.Context, id int) error {
+	query := "DELETE FROM users WHERE id = $1"
+
+	cmgTag, err := r.DB.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	if cmgTag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}

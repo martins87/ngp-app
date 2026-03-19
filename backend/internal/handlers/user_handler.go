@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 
@@ -130,4 +131,29 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(200, user)
 }
 
-// func DeleteUser() {}
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	// Parse id
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	// Call service/repo
+	err = h.Repo.DeleteUser(c.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(404, gin.H{"error": "user not found"})
+			return
+		}
+
+		// Log internal error
+		log.Println("DeleteUser error:", err)
+
+		c.JSON(500, gin.H{"error": "internal server error"})
+		return
+	}
+
+	// Return success code
+	c.Status(200)
+}

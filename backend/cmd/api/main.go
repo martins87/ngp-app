@@ -37,6 +37,7 @@ func main() {
 	r.GET("/users/:id", handler.GetUser)
 	r.POST("/users", handler.CreateUser)
 	r.PATCH("/users/:id", handler.UpdateUser)
+	r.DELETE("users/:id", handler.DeleteUser)
 
 	r.Run(":8080")
 }
